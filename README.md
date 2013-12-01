@@ -12,6 +12,10 @@ This view is useful for when a list of scrollable, selectable locations need to 
   </tr>
 </table>
 
+## Changes in this fork
+
+This fork adds the option to enable interaction with the map (scrolling, zooming) even if the map is not expanded.
+
 ## Usage
 
 1. Drop the **LocationPickerView** folder into your app. 
@@ -47,6 +51,7 @@ locationPickerView.tableViewDelegate = self;
 locationPickerView.delegate = self;
 locationPickerView.shouldCreateHideMapButton = YES;
 locationPickerView.pullToExpandMapEnabled = YES;
+locationPickerView.mapInteractionEnabled = YES; // Disables "tap to expand" but enables direct interaction with the map
 locationPickerView.defaultMapHeight = 190.0;
 locationPickerView.parallaxScrollFactor = 0.4; // little slower than normal.
 locationPickerView.backgroundViewColor = [UIColor yellowColor]; //set color to the tableView background without the map

@@ -15,7 +15,7 @@
 @property (nonatomic) CGRect defaultMapViewFrame;
 @property (nonatomic, strong) UITapGestureRecognizer *mapTapGesture;
 
-/** This is only created if the user does not override the 
+/** This is only created if the user does not override the
  mapViewDidExpand: method. Allows the user to shrink the map. */
 @property (nonatomic, strong) UIButton *closeMapButton;
 
@@ -55,6 +55,7 @@
     _defaultMapHeight               = 130.0f;
     _parallaxScrollFactor           = 0.6f;
     _amountToScrollToFullScreenMap  = 110.0f;
+    _mapInteractionEnabled          = NO;
     self.autoresizesSubviews        = YES;
     self.autoresizingMask           = UIViewAutoresizingFlexibleWidth |
                                       UIViewAutoresizingFlexibleHeight;
@@ -73,12 +74,13 @@
     [super layoutSubviews];
     
     if (!self.tableView) {
-        _tableView = [[UITableView alloc] initWithFrame:self.bounds];
+        _tableView = [[LocationPickerTableView alloc] initWithFrame:self.bounds];
         self.tableView.backgroundColor = [UIColor clearColor];
         self.tableView.delegate = self.tableViewDelegate;
         self.tableView.dataSource = self.tableViewDataSource;
         self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth |
         UIViewAutoresizingFlexibleHeight;
+        self.tableView.passTouchesInHeaderView = self.mapInteractionEnabled;
         
         // Add scroll view KVO
         void *context = (__bridge void *)self;
@@ -109,8 +111,8 @@
                                               self.defaultMapHeight + (self.defaultMapHeight * self.parallaxScrollFactor * 4));
         _mapView = [[MKMapView alloc] initWithFrame:self.defaultMapViewFrame];
         self.mapView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        self.mapView.scrollEnabled = NO;
-        self.mapView.zoomEnabled = NO;
+        self.mapView.scrollEnabled = self.mapInteractionEnabled;
+        self.mapView.zoomEnabled = self.mapInteractionEnabled;
         self.mapView.delegate = self.mapViewDelegate;
         [self insertSubview:self.mapView belowSubview:self.tableView];
         
@@ -124,7 +126,7 @@
     }
     
     // Add tap gesture to table
-    if (!self.mapTapGesture) {
+    if (!self.mapTapGesture && !self.mapInteractionEnabled) {
         self.mapTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self
                                                                      action:@selector(mapWasTapped:)];
         self.mapTapGesture.cancelsTouchesInView = YES;
@@ -170,7 +172,7 @@
     self.mapView.delegate = _mapViewDelegate;
 }
 
-- (void)setTableView:(UITableView *)tableView
+- (void)setTableView:(LocationPickerTableView *)tableView
 {
     _tableView = tableView;
     
@@ -262,7 +264,9 @@
     }
     
     self.isMapAnimating = animated;
-    [self.tableView.tableHeaderView removeGestureRecognizer:self.mapTapGesture];
+    if (self.mapTapGesture) {
+        [self.tableView.tableHeaderView removeGestureRecognizer:self.mapTapGesture];
+    }
     if (self.tableView.numberOfSections) {
         [self.tableView scrollToRowAtIndexPath:[NSIndexPath indexPathForItem:0 inSection:0] atScrollPosition:UITableViewScrollPositionBottom animated:animated];
     }
@@ -339,9 +343,11 @@
     }
     
     self.isMapAnimating = animated;
-    self.mapView.scrollEnabled = NO;
-    self.mapView.zoomEnabled = NO;
-    [self.tableView.tableHeaderView addGestureRecognizer:self.mapTapGesture];
+    if (!self.mapInteractionEnabled) {
+        self.mapView.scrollEnabled = NO;
+        self.mapView.zoomEnabled = NO;
+        [self.tableView.tableHeaderView addGestureRecognizer:self.mapTapGesture];
+    }
     
     // Store the correct tableViewFrame.
     // Set table view off the bottom of the screen, and animate
@@ -462,6 +468,19 @@
             self.mapView.frame = newMapFrame;
         }
     }
+}
+
+@end
+
+@implementation LocationPickerTableView
+
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event
+{
+    UIView *view = [super hitTest:point withEvent:event];
+    if (view == self.tableHeaderView && self.passTouchesInHeaderView) {
+        return nil;
+    }
+    return view;
 }
 
 @end

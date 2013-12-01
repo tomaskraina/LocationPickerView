@@ -16,6 +16,9 @@
 
 typedef void (^LocationPickerViewBlock)(LocationPickerView *locationPicker);
 
+@interface LocationPickerTableView : UITableView
+@property (nonatomic) BOOL passTouchesInHeaderView;
+@end
 
 @interface LocationPickerView : UIView <UIScrollViewDelegate>
 
@@ -34,6 +37,11 @@ typedef void (^LocationPickerViewBlock)(LocationPickerView *locationPicker);
  on the table view to expand the map. This is disabled by default 
  because it may interfere with pull-to-refresh or other controls. */
 @property (nonatomic) BOOL pullToExpandMapEnabled;
+
+/** Determines whether or not the user can interact with the map
+ even if the map is not expanded. This is disabled by default.
+ By enabling it, the map won't expand on tap */
+@property (nonatomic) BOOL mapInteractionEnabled;
 
 /** The amount you must "pull down" on the scroll view to make the 
  map view pop-out to full screen. By default this is set to "140.0f". */
@@ -54,7 +62,7 @@ typedef void (^LocationPickerViewBlock)(LocationPickerView *locationPicker);
 @property (nonatomic, strong) MKMapView *mapView;
 
 /** Table view that sits below the map. */
-@property (nonatomic, strong) UITableView *tableView;
+@property (nonatomic, strong) LocationPickerTableView *tableView;
 
 /** The view to the tableview background view. */
 @property (nonatomic, strong) UIView *backgroundView;
